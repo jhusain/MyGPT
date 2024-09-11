@@ -8,13 +8,18 @@
 </head>
 <body>
     <h1>GPT Assistant</h1>
-    <p>Send some text or a URL and record your phrase.</p>
+    <p>The recognized phrase and share target data will appear below:</p>
     <div>
         <textarea id="result" rows="6" cols="50" placeholder="Results will appear here..."></textarea>
     </div>
-    <button id="start-recognition">Start Voice Recognition</button>
 
     <script>
+        // Start voice recognition immediately upon page load
+        window.addEventListener('DOMContentLoaded', () => {
+            startVoiceRecognition();
+            handleShareTargetData();
+        });
+
         // Function to handle voice recognition
         function startVoiceRecognition() {
             const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -26,7 +31,7 @@
 
             recognition.onresult = (event) => {
                 const recognizedPhrase = event.results[0][0].transcript;
-                displayResults(null, recognizedPhrase);
+                appendTextToResult(`Recognized: ${recognizedPhrase}`);
             };
 
             recognition.onerror = (event) => {
@@ -34,23 +39,20 @@
             };
         }
 
-        // Function to display both sent data and recognized voice input
-        function displayResults(sentText, recognizedPhrase) {
+        // Function to append text to the result box
+        function appendTextToResult(text) {
             const resultBox = document.getElementById('result');
-            resultBox.value = `Received: ${sentText || ''}\nRecognized: ${recognizedPhrase || ''}`;
+            resultBox.value += `${text}\n`;
         }
 
-        // Listen for the voice recognition button
-        document.getElementById('start-recognition').addEventListener('click', startVoiceRecognition);
-
-        // Check if the share target has passed data
-        window.addEventListener('DOMContentLoaded', () => {
+        // Function to handle data from the share target if available
+        function handleShareTargetData() {
             const urlParams = new URLSearchParams(window.location.search);
             const sentText = urlParams.get('text') || urlParams.get('url');
             if (sentText) {
-                displayResults(sentText, null);
+                appendTextToResult(`Received: ${sentText}`);
             }
-        });
+        }
     </script>
 </body>
 </html>
