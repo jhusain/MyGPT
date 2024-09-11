@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Target</title>
+</head>
+<body>
+    <h1>Processing shared content...</h1>
+    <script>
+        // Automatically redirect to index.html with shared data
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetURL = `/index.html?${urlParams.toString()}`;
+        window.location.href = targetURL;
+    </script>
+</body>
+</html>
