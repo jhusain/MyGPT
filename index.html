@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT Assistant</title>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <h1>GPT Assistant</h1>
+    <p>Send some text or a URL and record your phrase.</p>
+    <div>
+        <textarea id="result" rows="6" cols="50" placeholder="Results will appear here..."></textarea>
+    </div>
+    <button id="start-recognition">Start Voice Recognition</button>
+
+    <script>
+        // Function to handle voice recognition
+        function startVoiceRecognition() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const recognizedPhrase = event.results[0][0].transcript;
+                displayResults(null, recognizedPhrase);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Voice recognition error:", event.error);
+            };
+        }
+
+        // Function to display both sent data and recognized voice input
+        function displayResults(sentText, recognizedPhrase) {
+            const resultBox = document.getElementById('result');
+            resultBox.value = `Received: ${sentText || ''}\nRecognized: ${recognizedPhrase || ''}`;
+        }
+
+        // Listen for the voice recognition button
+        document.getElementById('start-recognition').addEventListener('click', startVoiceRecognition);
+
+        // Check if the share target has passed data
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sentText = urlParams.get('text') || urlParams.get('url');
+            if (sentText) {
+                displayResults(sentText, null);
+            }
+        });
+    </script>
+</body>
+</html>
