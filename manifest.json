@@ -1,0 +1,31 @@
+{
+  "name": "GPT Assistant",
+  "short_name": "GPT Assist",
+  "description": "PWA for receiving text or URL input and combining it with voice recognition output.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "clipboardRead",
+    "clipboardWrite"
+  ],
+  "share_target": {
+    "action": "/share.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#000000"
+}
