@@ -12,31 +12,61 @@
     <div>
         <textarea id="result" rows="6" cols="50" placeholder="Results will appear here..."></textarea>
     </div>
+    <p id="partial">Partial recognition will appear here...</p>
+    <button id="trigger">Start Voice Recognition</button>
 
     <script>
-        // Start voice recognition immediately upon page load
-        window.addEventListener('DOMContentLoaded', () => {
-            startVoiceRecognition();
-            handleShareTargetData();
-        });
+        // Initialize Vosk WebAssembly-based speech recognition
+        async function init() {
+            const resultsContainer = document.getElementById('result');
+            const partialContainer = document.getElementById('partial');
 
-        // Function to handle voice recognition
-        function startVoiceRecognition() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
+            partialContainer.textContent = "Loading...";
 
-            recognition.start();
+            // Load the model (ensure that 'model.tar.gz' is accessible)
+            const channel = new MessageChannel();
+            const model = await Vosk.createModel('model.tar.gz');
+            model.registerPort(channel.port1);
 
-            recognition.onresult = (event) => {
-                const recognizedPhrase = event.results[0][0].transcript;
-                appendTextToResult(`Recognized: ${recognizedPhrase}`);
-            };
+            const sampleRate = 48000;
+            const recognizer = new model.KaldiRecognizer(sampleRate);
+            recognizer.setWords(true);
 
-            recognition.onerror = (event) => {
-                console.error("Voice recognition error:", event.error);
-            };
+            // Display the final result when recognized
+            recognizer.on("result", (message) => {
+                const result = message.result;
+                const newText = `${result.text} `;
+                appendTextToResult(`Recognized: ${newText}`);
+            });
+
+            // Display partial result in real-time
+            recognizer.on("partialresult", (message) => {
+                const partial = message.result.partial;
+                partialContainer.textContent = partial;
+            });
+
+            partialContainer.textContent = "Ready";
+
+            // Capture audio from the user's microphone
+            const mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: false,
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    channelCount: 1,
+                    sampleRate
+                },
+            });
+
+            // Set up AudioContext and the AudioWorklet processor
+            const audioContext = new AudioContext();
+            await audioContext.audioWorklet.addModule('recognizer-processor.js');
+            const recognizerProcessor = new AudioWorkletNode(audioContext, 'recognizer-processor', { channelCount: 1, numberOfInputs: 1, numberOfOutputs: 1 });
+            recognizerProcessor.port.postMessage({ action: 'init', recognizerId: recognizer.id }, [channel.port2]);
+            recognizerProcessor.connect(audioContext.destination);
+
+            const source = audioContext.createMediaStreamSource(mediaStream);
+            source.connect(recognizerProcessor);
         }
 
         // Function to append text to the result box
@@ -53,6 +83,16 @@
                 appendTextToResult(`Received: ${sentText}`);
             }
         }
+
+        // Trigger voice recognition when the page loads and the button is clicked
+        window.onload = () => {
+            const trigger = document.getElementById('trigger');
+            trigger.onmouseup = () => {
+                trigger.disabled = true;
+                init();
+                handleShareTargetData();
+            };
+        };
     </script>
 </body>
 </html>
